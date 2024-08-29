@@ -23,6 +23,7 @@ public class HealthManager : MonoBehaviour
 
     private SpriteRenderer shipSpriteRenderer;
     private PlayerMovement shipMovementScript;
+    private ShipShooting shipShootingScript;
 
     public TextMeshProUGUI LivesCounterText; //for displaying lives in text. but i want it in ships!
 
@@ -34,6 +35,8 @@ public class HealthManager : MonoBehaviour
         UpdateLivesUI();
         GameOverPanel.SetActive(false); //makes sure the gameover panel is hidden on startup
 
+        //get all the components so I can later disable/re-enable them during respawns.
+        shipShootingScript = playerShip.GetComponent<ShipShooting>();
         shipSpriteRenderer = playerShip.GetComponent<SpriteRenderer>();
         shipMovementScript = playerShip.GetComponent<PlayerMovement>();
 
@@ -42,18 +45,18 @@ public class HealthManager : MonoBehaviour
     // Update is called once per frame
     void Update()
     {
-       if(isDestroyed)
+        if (isDestroyed)
         {
             respawnTimer += Time.deltaTime;
 
-            if(respawnTimer >= respawnDelay)
+            if (respawnTimer >= respawnDelay)
             {
                 RespawnShip();
             }
             return;
         }
 
-        if (healthAmount <= 0)  
+        if (healthAmount <= 0)
         {
             LoseLife();
         }
@@ -67,7 +70,7 @@ public class HealthManager : MonoBehaviour
         {
             Heal(5);
         }
-        
+
     }
 
     public void TakeDamage(float damage)
@@ -88,7 +91,7 @@ public class HealthManager : MonoBehaviour
         CurrentLives--;
         UpdateLivesUI();
 
-        if(CurrentLives <= 0)
+        if (CurrentLives <= 0)
         {
             TriggerExplosionAndDelay();
             GameOver();
@@ -103,8 +106,11 @@ public class HealthManager : MonoBehaviour
         Vector3 deathPosition = playerShip.transform.position;
 
         Instantiate(explodePrefab, playerShip.transform.position, Quaternion.identity);
+        //I had to disable all of the scripts during respawn. I wasnt sure if there was a better
+        //way to do this.
         shipSpriteRenderer.enabled = false;
         shipMovementScript.enabled = false;
+        shipShootingScript.enabled = false;
 
         // stop the ship's movement by resetting its velocity
         Rigidbody2D shipRb = playerShip.GetComponent<Rigidbody2D>();
@@ -114,21 +120,23 @@ public class HealthManager : MonoBehaviour
         respawnTimer = 0f;
 
         playerShip.transform.position = deathPosition;
-        
+
 
     }
-    
+
     void RespawnShip()
-    { 
+    {
         healthAmount = 100f;
         healthBar.fillAmount = healthAmount / 100f;
 
+        //re-enable all the scripting for the players ship
+        shipShootingScript.enabled = true;
         shipSpriteRenderer.enabled = true;
         shipMovementScript.enabled = true;
 
         isDestroyed = false;
     }
-    
+
 
     void UpdateLivesUI()
     {
@@ -137,14 +145,14 @@ public class HealthManager : MonoBehaviour
             Destroy(child.gameObject);
         }
 
-        for(int i = 0; i < CurrentLives; i++)
+        for (int i = 0; i < CurrentLives; i++)
         {
             GameObject miniShip = Instantiate(miniShipPrefab, ShipLivesPanel);
             RectTransform shipRect = miniShip.GetComponent<RectTransform>();
             shipRect.anchoredPosition = new Vector2(i * 100f, 0);
 
         }
-        LivesCounterText.text = "Lives: "; 
+        LivesCounterText.text = "Lives: ";
     }
 
     void GameOver()
@@ -158,15 +166,15 @@ public class HealthManager : MonoBehaviour
         //this lets me show the ship exploding before game over
         yield return new WaitForSecondsRealtime(1f);
 
-       
+
         GameOverPanel.SetActive(true);
-        Time.timeScale = 0f; 
+        Time.timeScale = 0f;
     }
 
     public void RestartGame()
     {
         Time.timeScale = 1f;
         SceneManager.LoadScene(SceneManager.GetActiveScene().name);
-        
+
     }
 }
