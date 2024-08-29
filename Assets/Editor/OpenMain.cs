@@ -3,23 +3,21 @@ using UnityEditor.SceneManagement;
 using UnityEngine.SceneManagement;
 
 [InitializeOnLoad]
+//Created this because I want the main scene to open automatically for my grader.
 public class OpenMain
 {
     static OpenMain()
     {
-        EditorApplication.playModeStateChanged += LoadDefaultScene;
+        EditorApplication.update += LoadDefaultScene;
     }
 
-    private static void LoadDefaultScene(PlayModeStateChange state)
+    private static void LoadDefaultScene()
     {
-        if (state == PlayModeStateChange.EnteredEditMode)
-        {
-            string scenePath = "Assets/Scenes/MainScene.unity";
-            if (!EditorSceneManager.GetActiveScene().path.Equals(scenePath))
-            {
-                EditorSceneManager.OpenScene(scenePath);
-            }
-        }
+
+        string scenePath = "Assets/Scenes/MainScene.unity";
+
+        EditorSceneManager.OpenScene(scenePath);
+
+        EditorApplication.update -= LoadDefaultScene;
     }
 }
-
